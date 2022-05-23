@@ -1,11 +1,79 @@
-<div id="search">
-
+<div id="search" class="container">
+    <div class="search-box">
+        <input type="text" v-model="searchQuery" @change="search(searchQuery);">
+        <label></label>
+    </div>
+    
+    <h1>Search Results</h1>
+    <div v-if="items.length > 0" class="search-results">
+        <div v-for="item in items" class="search-result-item">
+            <a :href="item.url">
+                <img :src="item.image" :alt="item.title" loading="lazy" />
+                <div v-html="item.title"></div>
+            </a>
+        </div>
+    </div>
+    <div v-else>
+        <div v-if="loading">Loading, please wait.... </div>
+        <div v-else>No results found</div>
+    </div>
+    
 </div>
 
 <script>
     const SearchPageOptions = {
-        nname: "Search Test",
+        name: "Search Test",
+        data() {
+            return {
+                searchQuery:  "shoe",
+                items: [],
+                isLoading: true
+            }
+        },
+        created() {
+            this.search()
+        },
+        methods: {
+            search(term) {
+                this.isLoading = true;
+
+                fetch(window.Shopify.routes.root + `search/suggest.json?q=${this.searchQuery}&resources[type]=product&resources[options][unavailable_products]=hide&resources[options][fields]=title,product_type,variants.title`)
+                    .then((response) => response.json())
+                    .then((suggestions) => {
+                        const productSuggestions = suggestions.resources.results.products;
+                        console.log(productSuggestions);
+                        if (productSuggestions.length > 0) {
+                            this.items = productSuggestions;
+                        }
+                    }
+                    );
+
+            }
+        }
     }
 
     const SearchPage = Vue.createApp(SearchPageOptions).mount("#search");
 </script>
+
+<style>
+    .container {
+        max-width: 80%;
+        margin: auto;
+    }
+    .search-results {
+        display: flex;
+        flex-direction: row;
+        width: 100%;
+        justify-content: space-between;
+        flex-wrap: wrap;
+    }
+
+    .search-result-item {
+        text-align: center;
+        flex-basis: 33%;
+        margin-bottom: 60px;
+    }
+    .search-results img {
+        max-width: 30%;
+    }
+</style>
